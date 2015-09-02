@@ -28,7 +28,6 @@ class NumericTest {
       : runningTime({0, 0}),
         startTime({0, 0}),
         endTime({0, 0}),
-        timerRunning(false),
         absErrors(),
         relErrors(){};
 
@@ -36,64 +35,64 @@ class NumericTest {
 
   virtual void updateStats(const TestCase &) = 0;
 
-  virtual struct timespec totalRunTime() const {
-    return runningTime;
-  };
+  virtual struct timespec totalRunTime() const;
+
+  mpfr::mpreal calcRelErrorAvg() { return avgRelErr; }
+  mpfr::mpreal calcRelErrorMed();
+  mpfr::mpreal calcRelErrorVar(unsigned precision);
+  mpfr::mpreal calcRelErrorSkew(unsigned precision);
+
+  template <unsigned moment>
+  mpfr::mpreal calcRelErrorMoment(unsigned precision) {
+    mpfr::mpreal accumulator(precision);
+    accumulator = 0;
+    for(auto &err : relErrors) {
+      mpfr::mpreal delta(precision);
+      delta = err - avgRelErr;
+      if(moment == 0) {
+        if(delta > 0) accumulator += 1;
+      } else {
+        for(unsigned i = 1; i < moment; i++) delta *= delta;
+      }
+      accumulator += delta;
+    }
+    return accumulator;
+  }
 
   class TimerError {};
+  class NoElementsError {};
 
  protected:
+  /* startTimer and stopTimer are timing critical;
+   * don't waste time on function calls
+   */
   void startTimer() {
-    if(!timerRunning) {
-      int err = clock_gettime(CLOCK_PROCESS_CPUTIME_ID,
-                              &startTime);
-      if(err) {
-        throw new TimerError;
-      }
-      timerRunning = true;
-    }
+    int err =
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &startTime);
+    if(err) throw TimerError();
   }
+  __attribute__((always_inline));
 
   void stopTimer() {
-    if(timerRunning) {
-      int err =
-          clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
-      if(err) {
-        throw new TimerError;
-      }
-      timerRunning = false;
-      struct timespec elapsed = calcDeltaTime();
-      addTime(elapsed);
-    }
+    int err =
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    if(err) throw TimerError();
+    struct timespec elapsed = calcDeltaTime();
+    addTime(elapsed);
   }
+  __attribute__((always_inline));
 
-  struct timespec calcDeltaTime() {
-    struct timespec delta;
-    delta.tv_sec = endTime.tv_sec - startTime.tv_sec;
-    delta.tv_nsec = endTime.tv_nsec - startTime.tv_nsec;
-    if(delta.tv_nsec < 0) {
-      delta.tv_sec--;
-      constexpr const int nsPerS = 1e9;
-      delta.tv_nsec += nsPerS;
-    }
-    return delta;
-  }
+  void addStatistic(mpfr::mpreal estimate,
+                    mpfr::mpreal correct);
 
-  void addTime(struct timespec len) {
-    runningTime.tv_nsec += len.tv_nsec;
-    runningTime.tv_sec += len.tv_sec;
-    constexpr const int maxNSec = 1e9;
-    if(runningTime.tv_nsec > maxNSec) {
-      runningTime.tv_nsec -= maxNSec;
-      runningTime.tv_sec++;
-    }
-  }
+  struct timespec calcDeltaTime();
+  void addTime(struct timespec len);
 
   struct timespec runningTime;
   struct timespec startTime, endTime;
-  bool timerRunning;
   std::vector<mpfr::mpreal> absErrors;
   std::vector<mpfr::mpreal> relErrors;
+  mpfr::mpreal avgRelErr;
 };
 };
 

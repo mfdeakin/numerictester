@@ -59,21 +59,11 @@ class DPNaiveTest : public NumericTester::NumericTest {
         static_cast<const DotProdCase<fptype> *>(&testCase);
     startTimer();
     fptype accumulator = 0.0;
-    for(int i = 0; i < dpCase->dim; i++)
+    for(unsigned i = 0; i < dpCase->dim; i++)
       accumulator += dpCase->v1[i] * dpCase->v2[i];
     stopTimer();
-    mpfr::mpreal absErr =
-        abs(dpCase->correctValue() - accumulator);
-    absErrors.push_back(absErr);
-    mpfr::mpreal relErr =
-        abs(absErr / dpCase->correctValue());
-    relErrors.push_back(relErr);
-    std::cout << "Absolute Error: " << absErr << "\n"
-              << "Relative Error: " << relErr << "\n"
-              << "Correct Bits: " << log(relErr) << "\n"
-              << "Run Time: " << runningTime.tv_sec << "."
-              << std::setfill('0') << std::setw(9)
-              << runningTime.tv_nsec << " s\n";
+    mpfr::mpreal estimate(accumulator);
+    addStatistic(estimate, testCase.correctValue());
   }
 };
 
@@ -84,8 +74,21 @@ int main(int argc, char **argv) {
   std::mt19937_64 engine(rd());
   std::uniform_real_distribution<float> rgenf(-maxMag,
                                               maxMag);
-  DotProdCase<float> t1(engine, rgenf, 4, 512);
   DPNaiveTest<float> naive;
-  naive.updateStats(t1);
+  for(int i = 0; i < 1e6; i++) {
+    DotProdCase<float> test(engine, rgenf, 4, 512);
+    naive.updateStats(test);
+  }
+  struct timespec t = naive.totalRunTime();
+  constexpr const int nsDigits = 9;
+  std::cout << "Running Time: " << t.tv_sec << "."
+            << std::setw(nsDigits) << std::setfill('0')
+            << t.tv_nsec << "\n";
+  std::cout << "Relative Error Mean: "
+            << naive.calcRelErrorAvg() << "\n";
+  std::cout << "Relative Error Variance: "
+            << naive.calcRelErrorVar(512) << "\n";
+  std::cout << "Relative Error Skew: "
+            << naive.calcRelErrorSkew(512) << "\n";
   return 0;
 }
