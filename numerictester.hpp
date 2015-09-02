@@ -12,7 +12,7 @@ namespace NumericTester {
 
 class TestCase {
  public:
-  TestCase(unsigned precision) : correct(precision) {}
+  TestCase() : correct() {}
   virtual ~TestCase() {}
   virtual const mpfr::mpreal correctValue() const {
     return correct;
@@ -37,17 +37,20 @@ class NumericTest {
 
   virtual struct timespec totalRunTime() const;
 
-  mpfr::mpreal calcRelErrorAvg() { return avgRelErr; }
+  /* These methods either return the specified statistic,
+   * or they throw a NoElementsError
+   */
+  mpfr::mpreal calcRelErrorAvg();
   mpfr::mpreal calcRelErrorMed();
-  mpfr::mpreal calcRelErrorVar(unsigned precision);
-  mpfr::mpreal calcRelErrorSkew(unsigned precision);
+  mpfr::mpreal calcRelErrorVar();
+  mpfr::mpreal calcRelErrorSkew();
 
   template <unsigned moment>
-  mpfr::mpreal calcRelErrorMoment(unsigned precision) {
-    mpfr::mpreal accumulator(precision);
+  mpfr::mpreal calcRelErrorMoment() {
+    mpfr::mpreal accumulator;
     accumulator = 0;
     for(auto &err : relErrors) {
-      mpfr::mpreal delta(precision);
+      mpfr::mpreal delta;
       delta = err - avgRelErr;
       if(moment == 0) {
         if(delta > 0) accumulator += 1;

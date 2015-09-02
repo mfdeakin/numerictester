@@ -19,12 +19,12 @@ class DotProdCase : public NumericTester::TestCase {
  public:
   DotProdCase(std::mt19937_64 &rgen,
               std::uniform_real_distribution<fptype> &dist,
-              unsigned dim, unsigned precision)
-      : NumericTester::TestCase(precision),
+              unsigned dim)
+      : NumericTester::TestCase(),
         v1(new fptype[dim]),
         v2(new fptype[dim]),
         dim(dim) {
-    mpfr::mpreal val1(precision), val2(precision);
+    mpfr::mpreal val1, val2;
     for(unsigned i = 0; i < dim; i++) {
       v1[i] = dist(rgen);
       val1 = v1[i];
@@ -68,6 +68,7 @@ class DPNaiveTest : public NumericTester::NumericTest {
 };
 
 int main(int argc, char **argv) {
+  mpfr::mpreal::set_default_prec(1024);
   typedef double fptype;
   constexpr const fptype maxMag = 1024.0 * 1024.0;
   std::random_device rd;
@@ -75,8 +76,8 @@ int main(int argc, char **argv) {
   std::uniform_real_distribution<float> rgenf(-maxMag,
                                               maxMag);
   DPNaiveTest<float> naive;
-  for(int i = 0; i < 1e6; i++) {
-    DotProdCase<float> test(engine, rgenf, 4, 512);
+  for(int i = 0; i < 6e6; i++) {
+    DotProdCase<float> test(engine, rgenf, 4);
     naive.updateStats(test);
   }
   struct timespec t = naive.totalRunTime();
@@ -87,8 +88,8 @@ int main(int argc, char **argv) {
   std::cout << "Relative Error Mean: "
             << naive.calcRelErrorAvg() << "\n";
   std::cout << "Relative Error Variance: "
-            << naive.calcRelErrorVar(512) << "\n";
+            << naive.calcRelErrorVar() << "\n";
   std::cout << "Relative Error Skew: "
-            << naive.calcRelErrorSkew(512) << "\n";
+            << naive.calcRelErrorSkew() << "\n";
   return 0;
 }

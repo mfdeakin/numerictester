@@ -7,11 +7,14 @@ struct timespec NumericTest::totalRunTime() const {
   return runningTime;
 };
 
-mpfr::mpreal NumericTest::calcRelErrorVar(
-    unsigned precision) {
+mpfr::mpreal NumericTest::calcRelErrorAvg() {
+  if(relErrors.size() == 0) throw NoElementsError();
+  return avgRelErr / relErrors.size();
+}
+
+mpfr::mpreal NumericTest::calcRelErrorVar() {
   if(relErrors.size() <= 1) throw NoElementsError();
-  return calcRelErrorMoment<2>(precision) /
-         (relErrors.size() - 1);
+  return calcRelErrorMoment<2>() / (relErrors.size() - 1);
 }
 
 mpfr::mpreal NumericTest::calcRelErrorMed() {
@@ -27,11 +30,10 @@ mpfr::mpreal NumericTest::calcRelErrorMed() {
   return median;
 }
 
-mpfr::mpreal NumericTest::calcRelErrorSkew(
-    unsigned precision) {
-  mpfr::mpreal stddev = sqrt(calcRelErrorVar(precision));
+mpfr::mpreal NumericTest::calcRelErrorSkew() {
+  mpfr::mpreal stddev = sqrt(calcRelErrorVar());
   mpfr::mpreal denominator = stddev * stddev * stddev;
-  mpfr::mpreal moment3 = calcRelErrorMoment<3>(precision);
+  mpfr::mpreal moment3 = calcRelErrorMoment<3>();
   mpfr::mpreal numerator = moment3 / relErrors.size();
   return numerator / denominator;
 }
