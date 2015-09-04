@@ -4,15 +4,11 @@
 
 #include <random>
 #include <typeinfo>
-#include <iostream>
-#include <iomanip>
 #include <cmath>
+#include <fstream>
 
 #include <assert.h>
 #include <time.h>
-
-template <typename fptype>
-class DotProdTest;
 
 template <typename fptype>
 class DotProdCase : public NumericTester::TestCase {
@@ -41,6 +37,8 @@ class DotProdCase : public NumericTester::TestCase {
 
   template <typename>
   friend class DPNaiveTest;
+  template <typename>
+  friend class DPFMATest;
 
  private:
   fptype *v1;
@@ -51,6 +49,10 @@ class DotProdCase : public NumericTester::TestCase {
 template <typename fptype>
 class DPNaiveTest : public NumericTester::NumericTest {
  public:
+  virtual const char *testName() {
+    return "Naive Dot Product";
+  }
+
   virtual void updateStats(
       const NumericTester::TestCase &testCase) {
     assert(typeid(testCase) ==
@@ -67,6 +69,30 @@ class DPNaiveTest : public NumericTester::NumericTest {
   }
 };
 
+template <typename fptype>
+class DPFMATest : public NumericTester::NumericTest {
+ public:
+  virtual const char *testName() {
+    return "FMA Dot Product";
+  }
+
+  virtual void updateStats(
+      const NumericTester::TestCase &testCase) {
+    assert(typeid(testCase) ==
+           typeid(const DotProdCase<fptype>));
+    const DotProdCase<fptype> *dpCase =
+        static_cast<const DotProdCase<fptype> *>(&testCase);
+    startTimer();
+    fptype accumulator = 0.0;
+    for(unsigned i = 0; i < dpCase->dim; i++)
+      accumulator = std::fma(dpCase->v1[i], dpCase->v2[i],
+                             accumulator);
+    stopTimer();
+    mpfr::mpreal estimate(accumulator);
+    addStatistic(estimate, testCase.correctValue());
+  }
+};
+
 int main(int argc, char **argv) {
   mpfr::mpreal::set_default_prec(1024);
   typedef double fptype;
@@ -76,20 +102,23 @@ int main(int argc, char **argv) {
   std::uniform_real_distribution<float> rgenf(-maxMag,
                                               maxMag);
   DPNaiveTest<float> naive;
-  for(int i = 0; i < 6e6; i++) {
+  DPFMATest<float> fmaTester;
+  for(int i = 0; i < 1e6; i++) {
     DotProdCase<float> test(engine, rgenf, 4);
     naive.updateStats(test);
+    fmaTester.updateStats(test);
   }
-  struct timespec t = naive.totalRunTime();
-  constexpr const int nsDigits = 9;
-  std::cout << "Running Time: " << t.tv_sec << "."
-            << std::setw(nsDigits) << std::setfill('0')
-            << t.tv_nsec << "\n";
-  std::cout << "Relative Error Mean: "
-            << naive.calcRelErrorAvg() << "\n";
-  std::cout << "Relative Error Variance: "
-            << naive.calcRelErrorVar() << "\n";
-  std::cout << "Relative Error Skew: "
-            << naive.calcRelErrorSkew() << "\n";
+  naive.printStats();
+  fmaTester.printStats();
+  {
+    std::ofstream naiveResults("Naive_Results.csv",
+                               std::ios::out);
+    naive.dumpData(naiveResults);
+  }
+  {
+    std::ofstream fmaResults("FMA_Results.csv",
+                             std::ios::out);
+    fmaTester.dumpData(fmaResults);
+  }
   return 0;
 }

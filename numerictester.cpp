@@ -1,6 +1,8 @@
 
 #include "numerictester.hpp"
 
+#include <iomanip>
+
 namespace NumericTester {
 
 struct timespec NumericTest::totalRunTime() const {
@@ -9,7 +11,7 @@ struct timespec NumericTest::totalRunTime() const {
 
 mpfr::mpreal NumericTest::calcRelErrorAvg() {
   if(relErrors.size() == 0) throw NoElementsError();
-  return avgRelErr / relErrors.size();
+  return accumRelErr / relErrors.size();
 }
 
 mpfr::mpreal NumericTest::calcRelErrorVar() {
@@ -30,12 +32,28 @@ mpfr::mpreal NumericTest::calcRelErrorMed() {
   return median;
 }
 
+mpfr::mpreal NumericTest::calcRelErrorMax() {
+  return maxRelErr;
+}
+
+mpfr::mpreal NumericTest::calcRelErrorMin() {
+  return minRelErr;
+}
+
 mpfr::mpreal NumericTest::calcRelErrorSkew() {
   mpfr::mpreal stddev = sqrt(calcRelErrorVar());
   mpfr::mpreal denominator = stddev * stddev * stddev;
   mpfr::mpreal moment3 = calcRelErrorMoment<3>();
   mpfr::mpreal numerator = moment3 / relErrors.size();
   return numerator / denominator;
+}
+
+mpfr::mpreal NumericTest::calcRelErrorKurtosis() {
+  mpfr::mpreal var = calcRelErrorVar();
+  mpfr::mpreal denominator = var * var;
+  mpfr::mpreal moment4 = calcRelErrorMoment<4>();
+  mpfr::mpreal kurtosis = moment4 / denominator - 3.0;
+  return kurtosis;
 }
 
 struct timespec NumericTest::calcDeltaTime() {
@@ -62,12 +80,41 @@ void NumericTest::addTime(struct timespec len) {
 
 void NumericTest::addStatistic(mpfr::mpreal estimate,
                                mpfr::mpreal correct) {
-  mpfr::mpreal absErr(512);
-  absErr = abs(estimate - correct);
+  mpfr::mpreal absErr = abs(estimate - correct);
   absErrors.push_back(absErr);
-  mpfr::mpreal relErr(512);
-  relErr = abs(absErr / correct);
+  mpfr::mpreal relErr = abs(absErr / correct);
   relErrors.push_back(relErr);
-  avgRelErr += relErr;
+  accumRelErr += relErr;
+  if(isnan(maxRelErr) || relErr > maxRelErr)
+    maxRelErr = relErr;
+  if(isnan(minRelErr) || relErr < minRelErr)
+    minRelErr = relErr;
+}
+
+void NumericTest::dumpData(std::ostream &out) {
+  printStats(out);
+  out << "Absolute Error, Relative Error\n";
+  for(unsigned i = 0; i < relErrors.size(); i++) {
+    mpfr::mpreal absErr = absErrors[i];
+    out << absErr << ", ";
+    mpfr::mpreal relErr = relErrors[i];
+    out << relErr << "\n";
+  }
+}
+
+void NumericTest::printStats(std::ostream &out) {
+  constexpr const int nsDigits = 9;
+  out << testName() << "\n"
+      << "Running Time: " << runningTime.tv_sec << "."
+      << std::setw(nsDigits) << std::setfill('0')
+      << runningTime.tv_nsec << "\n"
+      << "Relative Error Average: " << calcRelErrorAvg()
+      << "\n"
+      << "Relative Error Variance: " << calcRelErrorVar()
+      << "\n"
+      << "Relative Error Skew: " << calcRelErrorSkew()
+      << "\n"
+      << "Relative Error Kurtosis: "
+      << calcRelErrorKurtosis() << "\n";
 }
 };

@@ -19,6 +19,8 @@ class NTestCase : public NumericTester::TestCase {
 template <typename fptype>
 class NTest : public NumericTester::NumericTest {
  public:
+  virtual const char *testName() { return "Null Test"; }
+
   virtual void updateStats(
       const NumericTester::TestCase &testCase) {
     assert(typeid(testCase) ==
@@ -74,6 +76,26 @@ TEST(Statistics, variance) {
   const float ulp = variance * epsilon;
   mpfr::mpreal result = test.calcRelErrorVar();
   EXPECT_NEAR(static_cast<double>(result), variance, ulp);
+}
+
+TEST(Statistics, extremevals) {
+  constexpr const float known[] = {
+      -64.0, -32.0, -16.0, -8.0, -4.0, -2.0, -1.0, 0.0,
+      1.0,   2.0,   4.0,   8.0,  16.0, 32.0, 64.0};
+  constexpr const unsigned numTests =
+      sizeof(known) / sizeof(known[0]);
+  NTest<float> test;
+  for(unsigned i = 0; i < numTests; i++) {
+    constexpr const float correctVal = 1.0;
+    NTestCase<float> testcase(correctVal,
+                              known[i] + correctVal);
+    test.updateStats(testcase);
+  }
+  mpfr::mpreal minVal = test.calcRelErrorMin();
+  EXPECT_EQ(static_cast<double>(minVal), 0.0);
+  mpfr::mpreal maxVal = test.calcRelErrorMax();
+  EXPECT_EQ(static_cast<double>(maxVal),
+            known[numTests - 1]);
 }
 
 int main(int argc, char **argv) {

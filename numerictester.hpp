@@ -4,6 +4,7 @@
 
 #include <vector>
 
+#include <iostream>
 #include <time.h>
 
 #include "mpreal.h"
@@ -30,7 +31,9 @@ class NumericTest {
         endTime({0, 0}),
         absErrors(),
         relErrors(),
-        avgRelErr(0){};
+        accumRelErr(0),
+        maxRelErr(NAN),
+        minRelErr(NAN){};
 
   virtual ~NumericTest(){};
 
@@ -38,17 +41,29 @@ class NumericTest {
 
   virtual struct timespec totalRunTime() const;
 
+  virtual const char *testName() = 0;
+  virtual void printStats(std::ostream &out = std::cout);
+  virtual void dumpData(std::ostream &out = std::cout);
+
   /* These methods either return the specified statistic,
    * or they throw a NoElementsError
    */
   mpfr::mpreal calcRelErrorAvg();
   mpfr::mpreal calcRelErrorMed();
   mpfr::mpreal calcRelErrorVar();
+  /* Calculates the univariate data skew */
   mpfr::mpreal calcRelErrorSkew();
+  mpfr::mpreal calcRelErrorKurtosis();
+  mpfr::mpreal calcRelErrorMax();
+  mpfr::mpreal calcRelErrorMin();
 
   /* Calculates the central moment of the data */
   template <unsigned moment>
   mpfr::mpreal calcRelErrorMoment() {
+    if(moment == 1)
+      return mpfr::mpreal(0);
+    else if(moment > 1 && relErrors.size() <= 1)
+      throw NoElementsError();
     mpfr::mpreal accumulator;
     accumulator = 0;
     for(auto &err : relErrors) {
@@ -63,11 +78,9 @@ class NumericTest {
     }
     mpfr::mpreal result;
     if(moment == 0)
-      result = 0;
-    else if(relErrors.size() > 1)
-      result = accumulator / (relErrors.size() - 1);
+      result = accumulator;
     else
-      throw NoElementsError();
+      result = accumulator / (relErrors.size() - 1);
     return result;
   }
 
@@ -104,7 +117,7 @@ class NumericTest {
   struct timespec startTime, endTime;
   std::vector<mpfr::mpreal> absErrors;
   std::vector<mpfr::mpreal> relErrors;
-  mpfr::mpreal avgRelErr;
+  mpfr::mpreal accumRelErr, maxRelErr, minRelErr;
 };
 };
 
