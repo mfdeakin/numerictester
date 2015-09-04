@@ -29,7 +29,8 @@ class NumericTest {
         startTime({0, 0}),
         endTime({0, 0}),
         absErrors(),
-        relErrors(){};
+        relErrors(),
+        avgRelErr(0){};
 
   virtual ~NumericTest(){};
 
@@ -45,21 +46,29 @@ class NumericTest {
   mpfr::mpreal calcRelErrorVar();
   mpfr::mpreal calcRelErrorSkew();
 
+  /* Calculates the central moment of the data */
   template <unsigned moment>
   mpfr::mpreal calcRelErrorMoment() {
     mpfr::mpreal accumulator;
     accumulator = 0;
     for(auto &err : relErrors) {
-      mpfr::mpreal delta;
-      delta = err - avgRelErr;
+      mpfr::mpreal delta = err - calcRelErrorAvg();
+      mpfr::mpreal power = delta;
       if(moment == 0) {
-        if(delta > 0) accumulator += 1;
+        if(err > 0) accumulator += 1;
       } else {
-        for(unsigned i = 1; i < moment; i++) delta *= delta;
+        for(unsigned i = 1; i < moment; i++) power *= delta;
+        accumulator += power;
       }
-      accumulator += delta;
     }
-    return accumulator;
+    mpfr::mpreal result;
+    if(moment == 0)
+      result = 0;
+    else if(relErrors.size() > 1)
+      result = accumulator / (relErrors.size() - 1);
+    else
+      throw NoElementsError();
+    return result;
   }
 
   class TimerError {};

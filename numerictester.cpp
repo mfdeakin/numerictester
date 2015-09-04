@@ -14,7 +14,7 @@ mpfr::mpreal NumericTest::calcRelErrorAvg() {
 
 mpfr::mpreal NumericTest::calcRelErrorVar() {
   if(relErrors.size() <= 1) throw NoElementsError();
-  return calcRelErrorMoment<2>() / (relErrors.size() - 1);
+  return calcRelErrorMoment<2>();
 }
 
 mpfr::mpreal NumericTest::calcRelErrorMed() {
