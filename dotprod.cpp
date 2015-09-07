@@ -1,5 +1,6 @@
 
 #include "numerictester.hpp"
+#include "genericfp.hpp"
 #include "mpreal.h"
 
 #include <random>
@@ -28,6 +29,7 @@ class DotProdCase : public NumericTester::TestCase {
       val2 = v2[i];
       correct = correct + val1 * val2;
     }
+		correctRounded = correct.toLDouble();
   }
 
   virtual ~DotProdCase() {
@@ -45,6 +47,7 @@ class DotProdCase : public NumericTester::TestCase {
  private:
   fptype *v1;
   fptype *v2;
+	fptype correctRounded;
   const unsigned dim;
 };
 
@@ -57,14 +60,39 @@ class DPNullTest : public NumericTester::NumericTest {
 
   virtual void updateStats(
       const NumericTester::TestCase &testCase) {
-    assert(typeid(testCase) ==
-           typeid(const DotProdCase<fptype>));
-    const DotProdCase<fptype> *dpCase =
-        static_cast<const DotProdCase<fptype> *>(&testCase);
-    startTimer();
-    stopTimer();
-    mpfr::mpreal estimate(0);
+    fptype result = 0.0;
+    if(typeid(testCase) ==
+       typeid(const DotProdCase<float>)) {
+      const DotProdCase<float> *dpCase =
+          static_cast<const DotProdCase<float> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<double>)) {
+      const DotProdCase<double> *dpCase =
+          static_cast<const DotProdCase<double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<long double>)) {
+      const DotProdCase<long double> *dpCase =
+          static_cast<const DotProdCase<long double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    }
+    mpfr::mpreal estimate(result);
     addStatistic(estimate, testCase.correctValue());
+  }
+
+  template <typename intype>
+  fptype runTest(const DotProdCase<intype> *dpCase) {
+    return 0.0;
   }
 };
 
@@ -72,22 +100,48 @@ template <typename fptype>
 class DPNaiveTest : public NumericTester::NumericTest {
  public:
   virtual std::string testName() {
-    return std::string("Naive Dot Product");
+    return std::string("Naive Dot Product with ") +
+           fpconvert<fptype>::fpname;
   }
 
   virtual void updateStats(
       const NumericTester::TestCase &testCase) {
-    assert(typeid(testCase) ==
-           typeid(const DotProdCase<fptype>));
-    const DotProdCase<fptype> *dpCase =
-        static_cast<const DotProdCase<fptype> *>(&testCase);
-    startTimer();
+    fptype result = 0.0;
+    if(typeid(testCase) ==
+       typeid(const DotProdCase<float>)) {
+      const DotProdCase<float> *dpCase =
+          static_cast<const DotProdCase<float> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<double>)) {
+      const DotProdCase<double> *dpCase =
+          static_cast<const DotProdCase<double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<long double>)) {
+      const DotProdCase<long double> *dpCase =
+          static_cast<const DotProdCase<long double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    }
+    mpfr::mpreal estimate(result);
+    addStatistic(estimate, testCase.correctValue());
+  }
+
+  template <typename intype>
+  fptype runTest(const DotProdCase<intype> *dpCase) {
     fptype accumulator = 0.0;
     for(unsigned i = 0; i < dpCase->dim; i++)
       accumulator += dpCase->v1[i] * dpCase->v2[i];
-    stopTimer();
-    mpfr::mpreal estimate(accumulator);
-    addStatistic(estimate, testCase.correctValue());
+    return accumulator;
   }
 };
 
@@ -95,23 +149,49 @@ template <typename fptype>
 class DPFMATest : public NumericTester::NumericTest {
  public:
   virtual std::string testName() {
-    return std::string("FMA Dot Product");
+    return std::string("FMA Dot Product with ") +
+           fpconvert<fptype>::fpname;
   }
 
   virtual void updateStats(
       const NumericTester::TestCase &testCase) {
-    assert(typeid(testCase) ==
-           typeid(const DotProdCase<fptype>));
-    const DotProdCase<fptype> *dpCase =
-        static_cast<const DotProdCase<fptype> *>(&testCase);
-    startTimer();
+    fptype result = 0.0;
+    if(typeid(testCase) ==
+       typeid(const DotProdCase<float>)) {
+      const DotProdCase<float> *dpCase =
+          static_cast<const DotProdCase<float> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<double>)) {
+      const DotProdCase<double> *dpCase =
+          static_cast<const DotProdCase<double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<long double>)) {
+      const DotProdCase<long double> *dpCase =
+          static_cast<const DotProdCase<long double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    }
+    mpfr::mpreal estimate(result);
+    addStatistic(estimate, testCase.correctValue());
+  }
+
+  template <typename intype>
+  fptype runTest(const DotProdCase<intype> *dpCase) {
     fptype accumulator = 0.0;
     for(unsigned i = 0; i < dpCase->dim; i++)
       accumulator = std::fma(dpCase->v1[i], dpCase->v2[i],
                              accumulator);
-    stopTimer();
-    mpfr::mpreal estimate(accumulator);
-    addStatistic(estimate, testCase.correctValue());
+    return accumulator;
   }
 };
 
@@ -119,27 +199,54 @@ template <typename fptype>
 class DPFMAKahanTest : public NumericTester::NumericTest {
  public:
   virtual std::string testName() {
-    return std::string("Kahan FMA Dot Product");
+    return std::string("Kahan FMA Dot Product with ") +
+           fpconvert<fptype>::fpname;
   }
 
   virtual void updateStats(
       const NumericTester::TestCase &testCase) {
-    assert(typeid(testCase) ==
-           typeid(const DotProdCase<fptype>));
-    const DotProdCase<fptype> *dpCase =
-        static_cast<const DotProdCase<fptype> *>(&testCase);
-    startTimer();
+    fptype result = 0.0;
+    if(typeid(testCase) ==
+       typeid(const DotProdCase<float>)) {
+      const DotProdCase<float> *dpCase =
+          static_cast<const DotProdCase<float> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<double>)) {
+      const DotProdCase<double> *dpCase =
+          static_cast<const DotProdCase<double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<long double>)) {
+      const DotProdCase<long double> *dpCase =
+          static_cast<const DotProdCase<long double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    }
+    mpfr::mpreal estimate(result);
+    addStatistic(estimate, testCase.correctValue());
+  }
+
+  template <typename intype>
+  fptype runTest(const DotProdCase<intype> *dpCase) {
     fptype accumulator = 0.0;
     fptype c = 0.0;
     for(unsigned i = 0; i < dpCase->dim; i++) {
-      fptype mod = std::fma(dpCase->v1[i], dpCase->v2[i], -c);
+      fptype mod =
+          std::fma(dpCase->v1[i], dpCase->v2[i], -c);
       fptype tmp = accumulator + mod;
       c = (tmp - accumulator) - mod;
       accumulator = tmp;
     }
-    stopTimer();
-    mpfr::mpreal estimate(accumulator);
-    addStatistic(estimate, testCase.correctValue());
+    return accumulator;
   }
 };
 
@@ -152,34 +259,28 @@ int main(int argc, char **argv) {
   std::uniform_real_distribution<float> rgenf(-maxMag,
                                               maxMag);
   DPNullTest<float> null;
-  DPNaiveTest<float> naive;
-  DPFMATest<float> fmaTester;
-  DPFMAKahanTest<float> fmaKahanTester;
-  for(int i = 0; i < 1e5; i++) {
-    DotProdCase<float> test(engine, rgenf, 4);
-    null.updateStats(test);
-    naive.updateStats(test);
-    fmaTester.updateStats(test);
-    fmaKahanTester.updateStats(test);
+  NumericTester::NumericTest *tests[] = {
+      new DPNaiveTest<float>(),
+      new DPFMATest<float>(),
+      new DPFMAKahanTest<float>(),
+      new DPNaiveTest<double>(),
+      new DPFMATest<double>(),
+      new DPFMAKahanTest<double>(),
+      new DPNaiveTest<long double>(),
+      new DPFMATest<long double>(),
+      new DPFMAKahanTest<long double>()};
+  for(int i = 0; i < 1e3; i++) {
+    DotProdCase<float> testcase(engine, rgenf, 4);
+    null.updateStats(testcase);
+    for(auto t : tests) t->updateStats(testcase);
   }
   null.printStats();
-  naive.printStats();
-  fmaTester.printStats();
-  fmaKahanTester.printStats();
-  {
-    std::ofstream naiveResults("Naive_Results.csv",
-                               std::ios::out);
-    naive.dumpData(naiveResults);
-  }
-  {
-    std::ofstream fmaResults("FMA_Results.csv",
-                             std::ios::out);
-    fmaTester.dumpData(fmaResults);
-  }
-  {
-    std::ofstream fmaKahanResults("FMA_Kahan_Results.csv",
-                             std::ios::out);
-    fmaKahanTester.dumpData(fmaKahanResults);
+  for(auto t : tests) {
+    t->printStats();
+    std::string fname = t->testName().append(".csv");
+    std::ofstream results(fname, std::ios::out);
+    t->dumpData(results);
+    delete t;
   }
   return 0;
 }

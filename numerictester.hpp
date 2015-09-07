@@ -95,14 +95,12 @@ class NumericTest {
   void startTimer() {
     int err =
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &startTime);
-    if(err) throw TimerError();
   }
   __attribute__((always_inline));
 
   void stopTimer() {
     int err =
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
-    if(err) throw TimerError();
     struct timespec elapsed = calcDeltaTime();
     addTime(elapsed);
   }
