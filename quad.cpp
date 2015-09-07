@@ -55,7 +55,8 @@ class QuadNaiveTest : public NumericTester::NumericTest {
     fptype transSum = -stCase->radius * stCase->radius;
     for(unsigned i = 0; i < stCase->dim; i++) {
       moddedPt[i] = stCase->pos[i] + stCase->trans[i];
-      transSum += stCase->pos[i] * stCase->trans[i];
+      transSum += stCase->pos[i] * stCase->trans[i] +
+                  stCase->trans[i] * stCase->trans[i];
     }
     fptype accumulator = transSum;
     for(unsigned i = 0; i < stCase->dim; i++) {
@@ -77,7 +78,7 @@ int main(int argc, char **argv) {
                                               maxMag);
   NumericTester::NumericTest *tests[] = {
       new QuadNaiveTest<float>()};
-  for(int i = 0; i < 1e5; i++) {
+  for(int i = 0; i < 1e4; i++) {
     SphereTransCase<float> testcase(engine, rgenf);
     for(auto t : tests) {
       t->updateStats(testcase);
