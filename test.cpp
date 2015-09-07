@@ -19,7 +19,9 @@ class NTestCase : public NumericTester::TestCase {
 template <typename fptype>
 class NTest : public NumericTester::NumericTest {
  public:
-  virtual const char *testName() { return "Null Test"; }
+  virtual std::string testName() {
+    return std::string("Null Test");
+  }
 
   virtual void updateStats(
       const NumericTester::TestCase &testCase) {

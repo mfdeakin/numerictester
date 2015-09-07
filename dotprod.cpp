@@ -51,8 +51,8 @@ class DotProdCase : public NumericTester::TestCase {
 template <typename fptype>
 class DPNullTest : public NumericTester::NumericTest {
  public:
-  virtual const char *testName() {
-    return "Null Dot Product";
+  virtual std::string testName() {
+    return std::string("Null Dot Product");
   }
 
   virtual void updateStats(
@@ -71,8 +71,8 @@ class DPNullTest : public NumericTester::NumericTest {
 template <typename fptype>
 class DPNaiveTest : public NumericTester::NumericTest {
  public:
-  virtual const char *testName() {
-    return "Naive Dot Product";
+  virtual std::string testName() {
+    return std::string("Naive Dot Product");
   }
 
   virtual void updateStats(
@@ -94,8 +94,8 @@ class DPNaiveTest : public NumericTester::NumericTest {
 template <typename fptype>
 class DPFMATest : public NumericTester::NumericTest {
  public:
-  virtual const char *testName() {
-    return "FMA Dot Product";
+  virtual std::string testName() {
+    return std::string("FMA Dot Product");
   }
 
   virtual void updateStats(
@@ -118,8 +118,8 @@ class DPFMATest : public NumericTester::NumericTest {
 template <typename fptype>
 class DPFMAKahanTest : public NumericTester::NumericTest {
  public:
-  virtual const char *testName() {
-    return "Kahan FMA Dot Product";
+  virtual std::string testName() {
+    return std::string("Kahan FMA Dot Product");
   }
 
   virtual void updateStats(

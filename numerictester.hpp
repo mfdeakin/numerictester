@@ -3,6 +3,7 @@
 #define _NUMERICTESTER_HPP_
 
 #include <vector>
+#include <string>
 
 #include <iostream>
 #include <time.h>
@@ -41,7 +42,7 @@ class NumericTest {
 
   virtual struct timespec totalRunTime() const;
 
-  virtual const char *testName() = 0;
+  virtual std::string testName() = 0;
   virtual void printStats(std::ostream &out = std::cout);
   virtual void dumpData(std::ostream &out = std::cout);
 
