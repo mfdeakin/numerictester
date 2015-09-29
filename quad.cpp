@@ -223,12 +223,16 @@ void runQuadricTests(
       t->updateStats(testcase);
     }
   }
-  std::cout << testclass << "\n";
-  for(auto t : tests) t->printStats();
+  std::cout << testclass << "\n\n";
+  for(auto t : tests) {
+    t->printStats();
+    std::cout << "\n";
+  }
   for(int i = numTests / 2; i < numTests; i++) {
     auto t = tests[i];
     std::string fname =
-        t->testName().append(testclass).append(".csv");
+        t->testName().append(" ").append(testclass).append(
+            ".csv");
     std::ofstream results(fname, std::ios::out);
     t->dumpData(results);
   }
@@ -239,14 +243,17 @@ int main(int argc, char **argv) {
   mpfr::mpreal::set_default_prec(128);
   using fptype = float;
   constexpr const fptype maxMag = 1024.0 * 1024.0;
+  constexpr const unsigned numTests = 5e6;
   std::random_device rd;
   std::mt19937_64 engine(rd());
   std::uniform_real_distribution<fptype> rgenf(-maxMag,
                                                maxMag);
   runQuadricTests<SphereTransCase<fptype>, fptype>(
-      engine, rgenf, 1e4, std::string("Sphere Tests"));
+      engine, rgenf, numTests, std::string("Sphere Tests"));
+	std::cout.flush();
+  std::cout << "\n\n";
   runQuadricTests<AxisCylinderTransCase<fptype>, fptype>(
-      engine, rgenf, 1e4,
+      engine, rgenf, numTests,
       std::string("Axis Aligned Cylinder Tests"));
   return 0;
 }

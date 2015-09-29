@@ -2,6 +2,7 @@
 #include "numerictester.hpp"
 
 #include <iomanip>
+#include <assert.h>
 
 namespace NumericTester {
 
@@ -38,6 +39,24 @@ mpfr::mpreal NumericTest::calcRelErrorMax() {
 
 mpfr::mpreal NumericTest::calcRelErrorMin() {
   return minRelErr;
+}
+
+std::array<mpfr::mpreal, 2>
+NumericTest::calcRelErrorPercentile(double frac) {
+  if(relErrors.size() <= 0) throw NoElementsError();
+  if(frac < 0.0 || frac > 1.0) throw BadPercentileError();
+  std::sort(relErrors.begin(), relErrors.end());
+  int botPos =
+      (int)std::floor((1.0 - frac) * relErrors.size());
+  assert(botPos >= 0);
+  assert(botPos < relErrors.size());
+  int topPos = (int)std::ceil(frac * relErrors.size());
+  assert(topPos >= 0);
+  assert(topPos < relErrors.size());
+  std::array<mpfr::mpreal, 2> ret;
+  ret[0] = relErrors[botPos];
+  ret[1] = relErrors[topPos];
+  return ret;
 }
 
 mpfr::mpreal NumericTest::calcRelErrorSkew() {
@@ -104,6 +123,8 @@ void NumericTest::dumpData(std::ostream &out) {
 
 void NumericTest::printStats(std::ostream &out) {
   constexpr const int nsDigits = 9;
+  std::array<mpfr::mpreal, 2> percent =
+      calcRelErrorPercentile(0.99);
   out << testName() << "\n"
       << "Running Time: " << runningTime.tv_sec << "."
       << std::setw(nsDigits) << std::setfill('0')
@@ -115,6 +136,8 @@ void NumericTest::printStats(std::ostream &out) {
       << "Relative Error Skew: " << calcRelErrorSkew()
       << "\n"
       << "Relative Error Kurtosis: "
-      << calcRelErrorKurtosis() << "\n";
+      << calcRelErrorKurtosis() << "\n"
+      << "Relative Error 99th Percentile: " << percent[0]
+      << ", " << percent[1] << "\n";
 }
 };

@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <string>
+#include <array>
 
 #include <iostream>
 #include <time.h>
@@ -52,6 +53,13 @@ class NumericTest {
   mpfr::mpreal calcRelErrorAvg();
   mpfr::mpreal calcRelErrorMed();
   mpfr::mpreal calcRelErrorVar();
+  /* Calculates the upper and lower frac percentile,
+	 * with 0 < frac < 1.
+   * ie. frac=0.99 calculates the 99th percentile,
+   * and returns {{lowerPercentile, upperPercentile}}
+   */
+  std::array<mpfr::mpreal, 2> calcRelErrorPercentile(
+      double frac);
   /* Calculates the univariate data skew */
   mpfr::mpreal calcRelErrorSkew();
   mpfr::mpreal calcRelErrorKurtosis();
@@ -87,6 +95,7 @@ class NumericTest {
 
   class TimerError {};
   class NoElementsError {};
+	class BadPercentileError {};
 
  protected:
   /* startTimer and stopTimer are timing critical;
