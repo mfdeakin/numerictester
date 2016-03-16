@@ -1,6 +1,7 @@
 
 #include "numerictester.hpp"
 #include "genericfp.hpp"
+#include "kobbelt.hpp"
 #include "mpreal.h"
 
 #include <random>
@@ -29,7 +30,7 @@ class DotProdCase : public NumericTester::TestCase {
       val2 = v2[i];
       correct = correct + val1 * val2;
     }
-		correctRounded = correct.toLDouble();
+    correctRounded = correct.toLDouble();
   }
 
   virtual ~DotProdCase() {
@@ -43,11 +44,13 @@ class DotProdCase : public NumericTester::TestCase {
   friend class DPFMATest;
   template <typename>
   friend class DPFMAKahanTest;
+  template <typename>
+  friend class DPKobbeltTest;
 
  private:
   fptype *v1;
   fptype *v2;
-	fptype correctRounded;
+  fptype correctRounded;
   const unsigned dim;
 };
 
@@ -250,6 +253,53 @@ class DPFMAKahanTest : public NumericTester::NumericTest {
   }
 };
 
+template <typename fptype>
+class DPKobbeltTest : public NumericTester::NumericTest {
+ public:
+  virtual std::string testName() {
+    return std::string("Kobbelt Dot Product with ") +
+           fpconvert<fptype>::fpname;
+  }
+
+  virtual void updateStats(
+      const NumericTester::TestCase &testCase) {
+    fptype result = 0.0;
+    if(typeid(testCase) ==
+       typeid(const DotProdCase<float>)) {
+      const DotProdCase<float> *dpCase =
+          static_cast<const DotProdCase<float> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<double>)) {
+      const DotProdCase<double> *dpCase =
+          static_cast<const DotProdCase<double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    } else if(typeid(testCase) ==
+              typeid(const DotProdCase<long double>)) {
+      const DotProdCase<long double> *dpCase =
+          static_cast<const DotProdCase<long double> *>(
+              &testCase);
+      startTimer();
+      result = runTest(dpCase);
+      stopTimer();
+    }
+    mpfr::mpreal estimate(result);
+    addStatistic(estimate, testCase.correctValue());
+  }
+
+  template <typename intype>
+  fptype runTest(const DotProdCase<intype> *dpCase) {
+    return kobbeltDotProd<intype, fptype>(
+        dpCase->v1, dpCase->v2, dpCase->dim);
+  }
+};
+
 int main(int argc, char **argv) {
   mpfr::mpreal::set_default_prec(1024);
   typedef double fptype;
@@ -263,13 +313,18 @@ int main(int argc, char **argv) {
       new DPNaiveTest<float>(),
       new DPFMATest<float>(),
       new DPFMAKahanTest<float>(),
+      new DPKobbeltTest<float>(),
+
       new DPNaiveTest<double>(),
       new DPFMATest<double>(),
+      new DPKobbeltTest<double>(),
       new DPFMAKahanTest<double>(),
+
       new DPNaiveTest<long double>(),
       new DPFMATest<long double>(),
-      new DPFMAKahanTest<long double>()};
-  for(int i = 0; i < 1e3; i++) {
+      new DPFMAKahanTest<long double>(),
+      new DPKobbeltTest<long double>()};
+  for(int i = 0; i < 1e5; i++) {
     DotProdCase<float> testcase(engine, rgenf, 4);
     null.updateStats(testcase);
     for(auto t : tests) t->updateStats(testcase);
