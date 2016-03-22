@@ -48,6 +48,7 @@
 #ifndef __MPREAL_H__
 #define __MPREAL_H__
 
+#include <cstddef>
 #include <string>
 #include <iostream>
 #include <sstream>
