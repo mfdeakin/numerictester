@@ -282,8 +282,10 @@ int main(int argc, char **argv) {
     for(auto t : tests) t->updateStats(testcase);
   }
   null.printStats();
+  std::cout << "\n\n";
   for(auto t : tests) {
     t->printStats();
+    std::cout << "\n\n";
     std::string fname = t->testName().append(".csv");
     std::ofstream results(fname, std::ios::out);
     t->dumpData(results);

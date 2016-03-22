@@ -54,7 +54,7 @@ class NumericTest {
   mpfr::mpreal calcRelErrorMed();
   mpfr::mpreal calcRelErrorVar();
   /* Calculates the upper and lower frac percentile,
-	 * with 0 < frac < 1.
+   * with 0 < frac < 1.
    * ie. frac=0.99 calculates the 99th percentile,
    * and returns {{lowerPercentile, upperPercentile}}
    */
@@ -95,7 +95,7 @@ class NumericTest {
 
   class TimerError {};
   class NoElementsError {};
-	class BadPercentileError {};
+  class BadPercentileError {};
 
  protected:
   /* startTimer and stopTimer are timing critical;
