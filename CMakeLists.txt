@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 2.6)
 
 project (NumericTester)
 
-set(CXX_COMPILE_FLAGS "-g -std=c++14 -Wall")
+set(CXX_COMPILE_FLAGS "-O3 -std=c++14 -Wall --save-temps")
 
 set(CMAKE_CXX_FLAGS "${CXX_COMPILE_FLAGS}")
 

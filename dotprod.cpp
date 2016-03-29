@@ -110,7 +110,8 @@ class DPNullTest
   }
 
   template <typename intype>
-  fptype runTest(const DotProdCase<intype> *dpCase) {
+  fptype __attribute__((noinline))
+  runTest(const DotProdCase<intype> *dpCase) {
     return 0.0;
   }
 };
@@ -125,7 +126,8 @@ class DPNaiveTest
   }
 
   template <typename intype>
-  fptype runTest(const DotProdCase<intype> *dpCase) {
+  fptype __attribute__((noinline))
+  runTest(const DotProdCase<intype> *dpCase) {
     fptype accumulator = 0.0;
     for(unsigned i = 0; i < dpCase->dim; i++)
       accumulator += dpCase->v1[i] * dpCase->v2[i];
@@ -143,7 +145,8 @@ class DPFMATest
   }
 
   template <typename intype>
-  fptype runTest(const DotProdCase<intype> *dpCase) {
+  fptype __attribute__((noinline))
+  runTest(const DotProdCase<intype> *dpCase) {
     fptype accumulator = 0.0;
     for(unsigned i = 0; i < dpCase->dim; i++)
       accumulator = std::fma(dpCase->v1[i], dpCase->v2[i],
@@ -162,7 +165,8 @@ class DPKahanTest
   }
 
   template <typename intype>
-  fptype runTest(const DotProdCase<intype> *dpCase) {
+  fptype __attribute__((noinline))
+  runTest(const DotProdCase<intype> *dpCase) {
     fptype accumulator = 0.0;
     fptype c = 0.0;
     for(unsigned i = 0; i < dpCase->dim; i++) {
@@ -186,7 +190,8 @@ class DPFMAKahanTest
   }
 
   template <typename intype>
-  fptype runTest(const DotProdCase<intype> *dpCase) {
+  fptype __attribute__((noinline))
+  runTest(const DotProdCase<intype> *dpCase) {
     fptype accumulator = 0.0;
     fptype c = 0.0;
     for(unsigned i = 0; i < dpCase->dim; i++) {
@@ -212,7 +217,8 @@ class DPExactFMACompTest
   }
 
   template <typename intype>
-  fptype runTest(const DotProdCase<intype> *dpCase) {
+  fptype __attribute__((noinline))
+  runTest(const DotProdCase<intype> *dpCase) {
     std::array<intype, 2> terms(
         twoProd(dpCase->v1[0], dpCase->v2[0]));
     for(unsigned i = 1; i < dpCase->dim; i++) {
@@ -236,7 +242,8 @@ class DPKobbeltTest
   }
 
   template <typename intype>
-  fptype runTest(const DotProdCase<intype> *dpCase) {
+  fptype __attribute__((noinline))
+  runTest(const DotProdCase<intype> *dpCase) {
     return kobbeltDotProd<intype, fptype>(
         dpCase->v1, dpCase->v2, dpCase->dim);
   }
