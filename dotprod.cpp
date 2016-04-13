@@ -17,7 +17,7 @@ template <typename fptype>
 class DotProdCase : public NumericTester::TestCase {
  public:
   DotProdCase(std::mt19937_64 &rgen,
-              std::uniform_real_distribution<fptype> &dist,
+              auto &dist,
               unsigned dim)
       : NumericTester::TestCase(),
         v1(new fptype[dim]),
@@ -102,21 +102,6 @@ class DPTestInterface : public NumericTester::NumericTest {
 };
 
 template <typename fptype>
-class DPNullTest
-    : public DPTestInterface<fptype, DPNullTest<fptype>> {
- public:
-  virtual std::string testName() {
-    return std::string("Null Dot Product");
-  }
-
-  template <typename intype>
-  fptype __attribute__((noinline))
-  runTest(const DotProdCase<intype> *dpCase) {
-    return 0.0;
-  }
-};
-
-template <typename fptype>
 class DPNaiveTest
     : public DPTestInterface<fptype, DPNaiveTest<fptype>> {
  public:
@@ -147,10 +132,11 @@ class DPFMATest
   template <typename intype>
   fptype __attribute__((noinline))
   runTest(const DotProdCase<intype> *dpCase) {
-    fptype accumulator = 0.0;
-    for(unsigned i = 0; i < dpCase->dim; i++)
+    intype accumulator = 0.0;
+    for(unsigned i = 0; i < dpCase->dim; i++) {
       accumulator = std::fma(dpCase->v1[i], dpCase->v2[i],
                              accumulator);
+    }
     return accumulator;
   }
 };
@@ -249,15 +235,34 @@ class DPKobbeltTest
   }
 };
 
+void runTests(const int numTests, const int vecSize);
+
 int main(int argc, char **argv) {
+  int numTests = 1e5;
+  int vecSize = 4;
+  if(argc > 1) {
+    numTests = atoi(argv[1]);
+    if(numTests < 1) {
+      printf("Number of tests must be greater than 0\n");
+      return -1;
+    }
+    if(argc > 2) {
+      vecSize = atoi(argv[2]);
+      if(vecSize < 1) {
+        printf("Vector size must be greater than 0\n");
+        return -1;
+      }
+    }
+  }
+  runTests(numTests, vecSize);
+  return 0;
+}
+
+void runTests(const int numTests, const int vecSize) {
   mpfr::mpreal::set_default_prec(1024);
-  typedef double fptype;
-  constexpr const fptype maxMag = 1024.0 * 1024.0;
   std::random_device rd;
   std::mt19937_64 engine(rd());
-  std::uniform_real_distribution<float> rgenf(-maxMag,
-                                              maxMag);
-  DPNullTest<float> null;
+  std::exponential_distribution<float> rgenf(log(2));
   NumericTester::NumericTest *tests[] = {
       new DPNaiveTest<float>(),
       new DPFMATest<float>(),
@@ -279,17 +284,10 @@ int main(int argc, char **argv) {
       new DPFMAKahanTest<long double>(),
       new DPExactFMACompTest<long double>(),
       new DPKobbeltTest<long double>()};
-  int numTests = 1e5;
-  if(argc > 1) {
-    numTests = atoi(argv[1]);
-  }
   for(int i = 0; i < numTests; i++) {
-    DotProdCase<float> testcase(engine, rgenf, 4);
-    null.updateStats(testcase);
+    DotProdCase<float> testcase(engine, rgenf, vecSize);
     for(auto t : tests) t->updateStats(testcase);
   }
-  null.printStats();
-  std::cout << "\n\n";
   for(auto t : tests) {
     t->printStats();
     std::cout << "\n\n";
@@ -298,5 +296,4 @@ int main(int argc, char **argv) {
     t->dumpData(results);
     delete t;
   }
-  return 0;
 }
