@@ -9,6 +9,8 @@
 #include <iostream>
 #include <time.h>
 
+#include <assert.h>
+
 #include "mpreal.h"
 
 namespace NumericTester {
@@ -104,12 +106,14 @@ class NumericTest {
   void startTimer() {
     int err =
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &startTime);
+    assert(err == 0);
   }
   __attribute__((always_inline));
 
   void stopTimer() {
     int err =
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    assert(err == 0);
     struct timespec elapsed = calcDeltaTime();
     addTime(elapsed);
   }

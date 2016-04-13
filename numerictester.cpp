@@ -49,10 +49,10 @@ NumericTest::calcRelErrorPercentile(double frac) {
   int botPos =
       (int)std::floor((1.0 - frac) * relErrors.size());
   assert(botPos >= 0);
-  assert(botPos < relErrors.size());
+  assert(botPos < (int)relErrors.size());
   int topPos = (int)std::ceil(frac * relErrors.size());
   assert(topPos >= 0);
-  assert(topPos < relErrors.size());
+  assert(topPos < (int)relErrors.size());
   std::array<mpfr::mpreal, 2> ret;
   ret[0] = relErrors[botPos];
   ret[1] = relErrors[topPos];

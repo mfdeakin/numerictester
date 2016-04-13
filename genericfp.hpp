@@ -38,17 +38,17 @@ struct fpconvert;
 
 template <>
 struct fpconvert<float> : public fp32 {
-  static constexpr char *fpname = "Single Precision";
+  static constexpr const char *fpname = "Single Precision";
 };
 
 template <>
 struct fpconvert<double> : public fp64 {
-  static constexpr char *fpname = "Double Precision";
+  static constexpr const char *fpname = "Double Precision";
 };
 
 template <>
 struct fpconvert<long double> : public fp80 {
-  static constexpr char *fpname = "Extended Double Precision";
+  static constexpr const char *fpname = "Extended Double Precision";
 };
 
 template <typename fptype>
