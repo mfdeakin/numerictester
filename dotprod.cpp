@@ -16,8 +16,7 @@
 template <typename fptype>
 class DotProdCase : public NumericTester::TestCase {
  public:
-  DotProdCase(std::mt19937_64 &rgen,
-              auto &dist,
+  DotProdCase(std::mt19937_64 &rgen, auto &dist,
               unsigned dim)
       : NumericTester::TestCase(),
         v1(new fptype[dim]),
@@ -25,9 +24,13 @@ class DotProdCase : public NumericTester::TestCase {
         dim(dim) {
     mpfr::mpreal val1, val2;
     for(unsigned i = 0; i < dim; i++) {
-      v1[i] = dist(rgen);
+      do {
+        v1[i] = dist(rgen);
+      } while(isinf(v1[i]) || isnan(v1[i]));
       val1 = v1[i];
-      v2[i] = dist(rgen);
+      do {
+        v2[i] = dist(rgen);
+      } while(isinf(v2[i]) || isnan(v2[i]));
       val2 = v2[i];
       correct = correct + val1 * val2;
     }
