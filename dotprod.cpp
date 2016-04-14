@@ -16,18 +16,19 @@
 template <typename fptype>
 class DotProdCase : public NumericTester::TestCase {
  public:
-  DotProdCase(std::mt19937_64 &rgen,
-              auto &dist,
-              unsigned dim)
+  DotProdCase(std::mt19937_64 &rgen, auto &signDist,
+              auto &expDist, auto &manDist, unsigned dim)
       : NumericTester::TestCase(),
         v1(new fptype[dim]),
         v2(new fptype[dim]),
         dim(dim) {
     mpfr::mpreal val1, val2;
     for(unsigned i = 0; i < dim; i++) {
-      v1[i] = dist(rgen);
+      v1[i] =
+          generateFPVal(rgen, signDist, expDist, manDist);
       val1 = v1[i];
-      v2[i] = dist(rgen);
+      v2[i] =
+          generateFPVal(rgen, signDist, expDist, manDist);
       val2 = v2[i];
       correct = correct + val1 * val2;
     }
@@ -37,6 +38,23 @@ class DotProdCase : public NumericTester::TestCase {
   virtual ~DotProdCase() {
     delete[] v1;
     delete[] v2;
+  }
+
+  static fptype generateFPVal(std::mt19937_64 &rgen,
+                              auto &signDist, auto &expDist,
+                              auto &manDist) {
+    for(;;) {
+      union {
+        GenericFP::fpconvert<fptype> fpBits;
+        fptype fpVal;
+      } fpBuf;
+      fpBuf.fpBits.sign = signDist(rgen);
+      fpBuf.fpBits.exponent = expDist(rgen);
+      fpBuf.fpBits.mantissa = manDist(rgen);
+      if(!std::isnan(fpBuf.fpVal) &&
+         !std::isinf(fpBuf.fpVal))
+        return fpBuf.fpVal;
+    }
   }
 
   template <typename>
@@ -107,7 +125,7 @@ class DPNaiveTest
  public:
   virtual std::string testName() {
     return std::string("Naive Dot Product with ") +
-           fpconvert<fptype>::fpname;
+           GenericFP::fpconvert<fptype>::fpname;
   }
 
   template <typename intype>
@@ -126,7 +144,7 @@ class DPFMATest
  public:
   virtual std::string testName() {
     return std::string("FMA Dot Product with ") +
-           fpconvert<fptype>::fpname;
+           GenericFP::fpconvert<fptype>::fpname;
   }
 
   template <typename intype>
@@ -147,7 +165,7 @@ class DPKahanTest
  public:
   virtual std::string testName() {
     return std::string("Kahan Dot Product with ") +
-           fpconvert<fptype>::fpname;
+           GenericFP::fpconvert<fptype>::fpname;
   }
 
   template <typename intype>
@@ -172,7 +190,7 @@ class DPFMAKahanTest
  public:
   virtual std::string testName() {
     return std::string("Kahan FMA Dot Product with ") +
-           fpconvert<fptype>::fpname;
+           GenericFP::fpconvert<fptype>::fpname;
   }
 
   template <typename intype>
@@ -198,8 +216,9 @@ class DPExactFMACompTest
  public:
   virtual std::string testName() {
     return std::string(
-               "Exact FMA Compensated Dot Product with ") +
-           fpconvert<fptype>::fpname;
+               "Exact FMA Compensated Dot Product "
+               "with ") +
+           GenericFP::fpconvert<fptype>::fpname;
   }
 
   template <typename intype>
@@ -224,7 +243,7 @@ class DPKobbeltTest
  public:
   virtual std::string testName() {
     return std::string("Kobbelt Dot Product with ") +
-           fpconvert<fptype>::fpname;
+           GenericFP::fpconvert<fptype>::fpname;
   }
 
   template <typename intype>
@@ -262,7 +281,11 @@ void runTests(const int numTests, const int vecSize) {
   mpfr::mpreal::set_default_prec(1024);
   std::random_device rd;
   std::mt19937_64 engine(rd());
-  std::exponential_distribution<float> rgenf(log(2));
+  std::uniform_int_distribution<int> rgenExp(
+      0, GenericFP::fpconvert<float>::centralExp + 20);
+  std::uniform_int_distribution<int> rgenMan(
+      0, GenericFP::fpconvert<float>::maxMantissa);
+  std::uniform_int_distribution<int> rgenSign(0, 1);
   NumericTester::NumericTest *tests[] = {
       new DPNaiveTest<float>(),
       new DPFMATest<float>(),
@@ -285,7 +308,8 @@ void runTests(const int numTests, const int vecSize) {
       new DPExactFMACompTest<long double>(),
       new DPKobbeltTest<long double>()};
   for(int i = 0; i < numTests; i++) {
-    DotProdCase<float> testcase(engine, rgenf, vecSize);
+    DotProdCase<float> testcase(engine, rgenSign, rgenExp,
+                                rgenMan, vecSize);
     for(auto t : tests) t->updateStats(testcase);
   }
   for(auto t : tests) {

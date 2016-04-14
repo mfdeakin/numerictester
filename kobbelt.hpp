@@ -16,14 +16,16 @@ constexpr int sign(const T &val) {
 
 template <typename fptype>
 int computeGenus(fptype val) {
-  fpconvert<fptype> hwFloatFields = gfFPStruct(val);
+  GenericFP::fpconvert<fptype> hwFloatFields =
+      GenericFP::gfFPStruct(val);
   return hwFloatFields.exponent * 2 +
          (hwFloatFields.mantissa & 1);
 }
 
 template <typename fptype>
 void tableInsert(std::map<int, fptype> &table, fptype val) {
-  /* First determine where in the table the value is to go */
+  /* First determine where in the table the value is to go
+   */
   int genus = computeGenus(val);
   if(table.count(genus) == 0) {
     /* There is no value here

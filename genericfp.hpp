@@ -2,7 +2,11 @@
 #ifndef _GENFP_H_
 #define _GENFP_H_
 
+#include <cfloat>
+
 #include <assert.h>
+
+namespace GenericFP {
 
 /* The strucure for little endian architectures */
 template <unsigned e, unsigned p>
@@ -10,8 +14,16 @@ struct fp {
   unsigned long mantissa : p;
   unsigned long exponent : e;
   unsigned sign : 1;
-  static const unsigned eBits = e, pBits = p,
-                        precision = p + 1;
+  static constexpr const unsigned eBits = e, pBits = p,
+                                  precision = p + 1;
+  static constexpr const unsigned long minMantissa = 0;
+  static constexpr const unsigned long maxMantissa =
+      (1 << p) - 1;
+  static constexpr const unsigned long centralExp =
+      (1 << (e - 1)) - 1;
+  static constexpr const unsigned long zeroExp = 0;
+  static constexpr const unsigned long infExp =
+      (1 << e) - 1;
 } __attribute__((packed));
 
 /* The bitfield lengths specified by IEEE 754 */
@@ -31,24 +43,28 @@ typedef fp<gf16ExpBits, gf16ManBits> fp16;
 typedef fp<gf32ExpBits, gf32ManBits> fp32;
 typedef fp<gf44ExpBits, gf44ManBits> fp44;
 typedef fp<gf64ExpBits, gf64ManBits> fp64;
-typedef fp<gf80ExpBits, gf80ManBits> fp80;
+typedef fp<gf80ExpBits, gf80ManBits> fp79;
 
 template <typename fptype>
 struct fpconvert;
 
 template <>
 struct fpconvert<float> : public fp32 {
+  static constexpr const float epsilon = FLT_EPSILON;
   static constexpr const char *fpname = "Single Precision";
 };
 
 template <>
 struct fpconvert<double> : public fp64 {
+  static constexpr const double epsilon = DBL_EPSILON;
   static constexpr const char *fpname = "Double Precision";
 };
 
 template <>
-struct fpconvert<long double> : public fp80 {
-  static constexpr const char *fpname = "Extended Double Precision";
+struct fpconvert<long double> : public fp79 {
+  static constexpr const long double epsilon = LDBL_EPSILON;
+  static constexpr const char *fpname =
+      "Extended Double Precision";
 };
 
 template <typename fptype>
@@ -156,8 +172,8 @@ TDest gfRoundNearest(TSrc src) {
   dest.mantissa = 0;
   dest.exponent = 0;
   /* Compute the exponents corresponding to 1.0 */
-  unsigned long srcCenter = (1 << src.eBits - 1) - 1;
-  unsigned long destCenter = (1 << dest.eBits - 1) - 1;
+  unsigned long srcCenter = (1 << (src.eBits - 1)) - 1;
+  unsigned long destCenter = (1 << (dest.eBits - 1)) - 1;
   unsigned long centerDiff = srcCenter - destCenter;
   if(dest.eBits < src.eBits &&
      src.exponent >= 2 * destCenter + centerDiff) {
@@ -171,7 +187,7 @@ TDest gfRoundNearest(TSrc src) {
     if(numShifts < 8 * dest.pBits) {
       /* Translate the mantissa to a denormalized number */
       dest.mantissa = src.mantissa >> 1;
-      dest.mantissa |= 1 << dest.pBits - 1;
+      dest.mantissa |= 1 << (dest.pBits - 1);
       dest.mantissa >>= numShifts;
     }
     /* Otherwise it's just 0 */
@@ -188,7 +204,7 @@ TDest gfRoundNearest(TSrc src) {
           src.mantissa & ((1 << roundingBit) - 1);
       /* Check the first truncated bit to see if we
        * need to consider rounding up */
-      if((truncated & (1 << roundingBit - 1)) > 0) {
+      if((truncated & (1 << (roundingBit - 1))) > 0) {
         unsigned long trailing;
         trailing =
             truncated & ((1 << (roundingBit - 1)) - 1);
@@ -206,6 +222,7 @@ TDest gfRoundNearest(TSrc src) {
     }
   }
   return dest;
+}
 }
 
 #endif
